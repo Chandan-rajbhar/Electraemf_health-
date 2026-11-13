@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { Search, Bell, ArrowLeft, X } from 'lucide-react';
+import { Search, Bell, ArrowLeft, X, User } from 'lucide-react';
 
 export default function Header({ 
   activeTab = 'home',
@@ -11,7 +11,9 @@ export default function Header({
   setSearchQuery,
   onCloseSearch,
   unreadCount = 2,
-  onNavigate 
+  onNavigate,
+  currentUser = null,
+  userPhoto = null
 }) {
   const isNotificationsActive = activeTab === 'notifications';
   const searchInputRef = useRef(null);
@@ -110,26 +112,27 @@ export default function Header({
             )}
           </button>
 
-          {/* User Profile Avatar with Online Status Indicator */}
+          {/* User Profile Avatar / Profile Icon */}
           <button 
             onClick={onOpenProfile}
-            className={`relative w-9 h-9 rounded-full overflow-visible active:scale-95 transition-all focus:outline-none shadow-2xs ${
-              activeTab === 'profile' ? 'ring-2 ring-blue-600' : 'hover:ring-2 hover:ring-blue-400'
+            className={`relative w-9 h-9 rounded-full overflow-hidden active:scale-95 transition-all focus:outline-none shadow-2xs ${
+              activeTab === 'profile' ? 'ring-2 ring-blue-600 ring-offset-1' : 'hover:ring-2 hover:ring-blue-400'
             }`}
             aria-label="User Profile"
           >
-            <div className="w-full h-full rounded-full overflow-hidden border border-slate-200 bg-slate-100">
-              <img 
-                src="/assets/IBEW-Engineer-for-EMF-Testing-in-NYC.jpg" 
-                alt="Dr. J. Dumanov" 
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = "/assets/5G-antenna-now.gif";
-                }}
-              />
+            <div className="w-full h-full rounded-full overflow-hidden border border-slate-200/90 bg-slate-50 flex items-center justify-center">
+              {userPhoto ? (
+                <img 
+                  src={userPhoto} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-blue-50/90 hover:bg-blue-100 text-blue-600 flex items-center justify-center transition-colors">
+                  <User className="w-4 h-4 stroke-[2.3]" />
+                </div>
+              )}
             </div>
-            {/* Online Status Dot */}
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full shadow-xs" />
           </button>
         </div>
       </div>

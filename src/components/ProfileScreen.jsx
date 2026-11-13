@@ -1,13 +1,48 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   ShieldCheck, Phone, Mail, User, Building, MapPin, 
   CheckSquare, Square, ChevronRight, FileText, Bookmark, 
   Bell, Scale, Lock, Share2, AlertCircle, CheckCircle2,
-  Send, Sparkles
+  Send, Sparkles, Camera, Trash2
 } from 'lucide-react';
 import { ShadcnSelect } from './ui/Select';
 
-export default function ProfileScreen({ onOpenCall }) {
+export default function ProfileScreen({ 
+  onOpenCall, 
+  onNavigate, 
+  currentUser, 
+  onLogout,
+  userPhoto = null,
+  onUpdatePhoto
+}) {
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Please select an image smaller than 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (onUpdatePhoto && typeof reader.result === 'string') {
+        onUpdatePhoto(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemovePhoto = () => {
+    if (onUpdatePhoto) {
+      onUpdatePhoto(null);
+    }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
   const [selectedState, setSelectedState] = useState('NY');
   const [concerns, setConcerns] = useState({
     powerLines: true,
@@ -66,6 +101,155 @@ export default function ProfileScreen({ onOpenCall }) {
 
   return (
     <div className="space-y-4 pb-24">
+      {/* 0. PROFILE PHOTO MANAGEMENT CARD */}
+      <div className="bg-white rounded-3xl p-4.5 border border-slate-100 shadow-sm space-y-3.5">
+        <div className="flex items-center gap-3.5">
+          {/* Circular Avatar with Camera Badge */}
+          <div className="relative shrink-0">
+            <div className="w-15 h-15 rounded-full overflow-hidden border-2 border-blue-500/30 bg-blue-50 flex items-center justify-center shadow-xs">
+              {userPhoto ? (
+                <img 
+                  src={userPhoto} 
+                  alt="Profile" 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <User className="w-7 h-7 text-blue-600 stroke-[2]" />
+              )}
+            </div>
+
+            {/* Quick Camera Edit Button */}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute -bottom-0.5 -right-0.5 w-6 h-6 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md active:scale-90 transition-all border-2 border-white cursor-pointer"
+              title="Upload photo"
+              aria-label="Upload photo"
+            >
+              <Camera className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Name & Details */}
+          <div className="flex-1 min-w-0">
+            <span className="text-[9.5px] font-black uppercase text-blue-600 tracking-wider block">
+              {currentUser ? 'CLIENT ACCOUNT ACTIVE' : 'PROFILE PHOTO & IDENTITY'}
+            </span>
+            <h2 className="text-sm font-extrabold text-slate-900 truncate mt-0.5">
+              {currentUser?.name || 'Property Owner / Client'}
+            </h2>
+            <p className="text-[11px] text-slate-500 truncate">
+              {currentUser?.email || (userPhoto ? 'Custom profile photo active' : 'Tap camera icon to set photo')}
+            </p>
+          </div>
+        </div>
+
+        {/* Hidden File Input */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleImageUpload} 
+          accept="image/*" 
+          className="hidden" 
+        />
+
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex-1 h-9 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-extrabold text-xs flex items-center justify-center gap-1.5 active:scale-98 transition-all cursor-pointer"
+          >
+            <Camera className="w-3.5 h-3.5 text-blue-600" />
+            <span>{userPhoto ? 'Change Photo' : 'Upload Profile Picture'}</span>
+          </button>
+
+          {userPhoto && (
+            <button
+              type="button"
+              onClick={handleRemovePhoto}
+              className="h-9 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs flex items-center justify-center gap-1 active:scale-98 transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Remove</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 0. SECURE CLIENT AUTHENTICATION / ACCESS CARD */}
+      {currentUser ? (
+        <div className="bg-gradient-to-r from-slate-900 via-blue-950 to-blue-900 text-white rounded-3xl p-4.5 border border-blue-900/50 shadow-md space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/20 backdrop-blur-md flex items-center justify-center text-white border border-blue-400/30">
+                <User className="w-5 h-5 text-blue-300" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase tracking-wider text-cyan-300 block">
+                  CLIENT ACCOUNT VERIFIED
+                </span>
+                <h2 className="text-sm font-extrabold text-white">
+                  {currentUser.name || currentUser.email}
+                </h2>
+                <span className="text-[11px] text-blue-200">
+                  {currentUser.email}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white text-[11px] font-bold border border-white/20 transition-all active:scale-95"
+            >
+              Sign Out
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-gradient-to-br from-blue-50 via-sky-50 to-white rounded-3xl p-4.5 border border-blue-200/80 shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-xs">
+                <Lock className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-[9px] font-black uppercase text-blue-600 tracking-wider block">
+                  ELECTRAEMF CLIENT PORTAL
+                </span>
+                <h2 className="text-xs font-extrabold text-slate-900">
+                  Sign In / Create Account
+                </h2>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full bg-blue-100/80 text-blue-700 text-[10px] font-extrabold">
+              Encrypted
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            Access certified lab reports, download court-admissible audit certificates, and view your assigned IBEW engineer triage.
+          </p>
+
+          <div className="grid grid-cols-2 gap-2 pt-0.5">
+            <button
+              type="button"
+              onClick={() => onNavigate && onNavigate('login')}
+              className="h-10 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs flex items-center justify-center shadow-sm shadow-blue-600/20 active:scale-98 transition-all cursor-pointer"
+            >
+              Login
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate && onNavigate('signup')}
+              className="h-10 rounded-xl bg-white hover:bg-blue-50 border border-blue-300 text-blue-700 font-extrabold text-xs flex items-center justify-center shadow-2xs active:scale-98 transition-all cursor-pointer"
+            >
+              Create Account
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 1. CLIENT INTAKE PORTAL CARD (Exact Image 4) */}
       <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
